@@ -106,9 +106,9 @@
 
 <!-- Tab Menu -->
 <div class="tabs-container">
-    <div id="tab1" class="MuiTab-root Mui-selected" onclick="showTab('openJob')">Open Job</div>
-    <div id="tab2" class="MuiTab-root" onclick="showTab('task')">Task</div>
-    <div id="tab3" class="MuiTab-root" onclick="showTab('register')">Register</div>
+    <div id="tab1" class="MuiTab-root Mui-selected" onclick="showTab('tab1')">Open Job</div>
+    <div id="tab2" class="MuiTab-root" onclick="showTab('tab2')">Task</div>
+    <div id="tab3" class="MuiTab-root" onclick="showTab('tab3')">Register</div>
 </div>
 
 <!-- Open Job tab -->
@@ -140,7 +140,7 @@
 
     <!-- Submit Button -->
     <div class="form-group">
-        <button id="submitAvailability" class="MuiButtonBase-root MuiButton-root MuiButton-containedPrimary">Submit</button>
+        <button id="submitAvailability" class="MuiButtonBase-root MuiButton-root MuiButton-containedPrimary" onclick="submitAvailability()">Submit</button>
     </div>
 </div>
 
@@ -241,6 +241,7 @@
             .then(data => {
                 const trucks = data.trucks;
                 const truckSelect = document.getElementById('truckSelect');
+                truckSelect.innerHTML = '<option value="">--Select Truck--</option>'; // Reset dropdown
                 trucks.forEach(truckId => {
                     fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_trucks/${truckId}`)
                         .then(response => response.json())
