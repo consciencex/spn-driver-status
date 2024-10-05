@@ -61,9 +61,6 @@
             font-weight: bold;
         }
     </style>
-    <!-- Add Material-UI CSS -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mui/0.10.1/css/mui.min.css">
 </head>
 <body>
 
@@ -178,33 +175,12 @@
                     document.getElementById('driverName').textContent = driver.driverName;
                     document.getElementById('driverId').textContent = driver.id;
                     fetchCurrentStatus(driverId);
-                    populateTruckDropdown(driverId);
                 }
             }).catch(err => console.error('Error fetching driver data:', err));
         }).catch(err => console.error('Error getting profile:', err));
     }
 
-    // Populate truck dropdown with truckNo using API call
-    function populateTruckDropdown(driverId) {
-        fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_drivers/${driverId}`)
-            .then(response => response.json())
-            .then(data => {
-                const trucks = data.trucks;
-                const truckSelect = document.getElementById('truckSelect');
-                trucks.forEach(truckId => {
-                    fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_trucks/${truckId}`)
-                        .then(response => response.json())
-                        .then(truckData => {
-                            const option = document.createElement('option');
-                            option.value = truckData.id;
-                            option.text = truckData.truckNo;
-                            truckSelect.appendChild(option);
-                        }).catch(err => console.error('Error fetching truck data:', err));
-                });
-            }).catch(err => console.error('Error fetching trucks:', err));
-    }
-
-    // Fetch current truck and availability status
+    // Populate truck dropdown and initial toggle state from the status API
     function fetchCurrentStatus(driverId) {
         fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_driver_status_by_driver_id`, {
             method: 'POST',
@@ -213,9 +189,21 @@
         }).then(response => response.json()).then(data => {
             if (data) {
                 const truckSelect = document.getElementById('truckSelect');
-                truckSelect.value = data.truckId || ""; // Set the default value if data is available
-                document.getElementById('availabilityToggle').checked = data.driverStatus === "Available";
-                document.getElementById('statusChiclet').textContent = data.driverStatus || "Not available";
+                const toggle = document.getElementById('availabilityToggle');
+                const chiclet = document.getElementById('statusChiclet');
+                
+                // Set truckNo placeholder
+                const option = document.createElement('option');
+                option.value = data.truckId;
+                option.text = data.truckNo || "--Select Truck--";
+                truckSelect.appendChild(option);
+                truckSelect.value = data.truckId || "";  // Set initial value
+                
+                // Set the toggle based on driverStatus
+                toggle.checked = data.driverStatus === "Available";
+                
+                // Set chiclet text to show "Available" or "Not available"
+                chiclet.textContent = data.driverStatus || "Not available";
             }
         }).catch(err => console.error('Error fetching current status:', err));
     }
