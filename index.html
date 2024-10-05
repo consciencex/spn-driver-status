@@ -6,6 +6,7 @@
     <title>Driver Status</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mui/material@5.0.0-beta.0/dist/material-ui.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,22 +14,33 @@
             max-width: 800px;
             margin: auto;
         }
-        .tabs {
+        .profile-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             margin-bottom: 20px;
         }
-        .tab-content {
-            margin-top: 20px;
-        }
-        .hidden {
-            display: none;
-        }
-        .MuiAvatar-root {
+        .profile-picture {
             width: 100px;
             height: 100px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+        .tabs-container {
+            display: flex;
+            justify-content: space-between;
             margin-bottom: 20px;
         }
         .form-group {
             margin-bottom: 20px;
+        }
+        .MuiTab-root {
+            min-width: 50%;
+        }
+        @media screen and (max-width: 768px) {
+            .tabs-container {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -36,16 +48,17 @@
 
 <h1>Driver Status</h1>
 
-<div class="tabs">
-    <button id="tab1" class="MuiButtonBase-root MuiButton-root MuiButton-contained">Open Job</button>
-    <button id="tab2" class="MuiButtonBase-root MuiButton-root MuiButton-contained">Task</button>
+<!-- Tab Menu -->
+<div class="tabs-container">
+    <div id="tab1" class="MuiTab-root MuiTab-textColorPrimary MuiTab-fullWidth Mui-selected">Open Job</div>
+    <div id="tab2" class="MuiTab-root MuiTab-textColorPrimary MuiTab-fullWidth">Task</div>
 </div>
 
 <!-- Open Job tab -->
 <div id="tab1-content" class="tab-content">
     <!-- Profile Section -->
-    <div id="profileSection" class="form-group">
-        <img id="profilePicture" src="" class="MuiAvatar-root" alt="Profile Picture">
+    <div class="profile-section">
+        <img id="profilePicture" src="" class="profile-picture" alt="Profile Picture">
         <h3 id="driverName"></h3>
         <p>Driver ID: <span id="driverId"></span></p>
     </div>
@@ -101,7 +114,7 @@
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         liff.init({
-            liffId: "2005786037-0DW7REEv" // Updated LIFF ID
+            liffId: "2005786037-0DW7REEv"
         }).then(() => {
             console.log('LIFF initialized');
             fetchDriverData();
@@ -115,11 +128,15 @@
         const tab2Content = document.getElementById('tab2-content');
 
         tab1.addEventListener('click', () => {
+            tab1.classList.add('Mui-selected');
+            tab2.classList.remove('Mui-selected');
             tab1Content.classList.remove('hidden');
             tab2Content.classList.add('hidden');
         });
 
         tab2.addEventListener('click', () => {
+            tab2.classList.add('Mui-selected');
+            tab1.classList.remove('Mui-selected');
             tab2Content.classList.remove('hidden');
             tab1Content.classList.add('hidden');
             fetchTaskData();
@@ -130,7 +147,7 @@
 
     let driverId = null;
 
-    // Fetch driver data from Xano and initialize the form
+    // Fetch driver data and initialize form
     function fetchDriverData() {
         liff.getProfile().then(profile => {
             document.getElementById('profilePicture').src = profile.pictureUrl;
@@ -144,13 +161,15 @@
                       driverId = driver.id;
                       document.getElementById('driverName').textContent = driver.driverName;
                       document.getElementById('driverId').textContent = driver.id;
+
                       populateTruckDropdown(driverId);
+                      fetchDriverStatus(driverId);
                   }
               }).catch(err => console.error('Error fetching driver data:', err));
         }).catch(err => console.error('Error getting profile:', err));
     }
 
-    // Populate truck dropdown with truckNo using API call
+    // Fetch and populate truck dropdown
     function populateTruckDropdown(driverId) {
         fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_drivers/${driverId}`)
             .then(response => response.json())
@@ -170,7 +189,47 @@
             }).catch(err => console.error('Error fetching trucks:', err));
     }
 
-    // Fetch task data and populate the table
+    // Fetch driver status and initialize toggle
+    function fetchDriverStatus(driverId) {
+        fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_driver_status_by_driver_id`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ driverId: driverId })
+        }).then(response => response.json())
+          .then(data => {
+              const status = data.driverStatus === "Available";
+              document.getElementById('availabilityToggle').checked = status;
+          }).catch(err => console.error('Error fetching driver status:', err));
+    }
+
+    // Submit availability and selected truck
+    function submitAvailability() {
+        const driverStatus = document.getElementById('availabilityToggle').checked ? 'Available' : 'Not available';
+        const selectedTruckId = document.getElementById('truckSelect').value;
+
+        if (!selectedTruckId) {
+            alert("Please select a truck.");
+            return;
+        }
+
+        fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_driver_status_by_driver_id`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                driverId: driverId,
+                driverStatus: driverStatus,
+                truckId: parseInt(selectedTruckId)
+            })
+        }).then(response => {
+            if (response.ok) {
+                alert('Status updated successfully.');
+            } else {
+                alert('Error updating status.');
+            }
+        }).catch(err => console.error('Error submitting availability:', err));
+    }
+
+    // Fetch task data and populate table
     function fetchTaskData() {
         if (!driverId) return;
 
@@ -204,33 +263,6 @@
                     }
                 });
             }).catch(err => console.error('Error fetching task data:', err));
-    }
-
-    // Submit availability and selected truck
-    function submitAvailability() {
-        const available = document.getElementById('availabilityToggle').checked ? 'Open' : 'Closed';
-        const selectedTruckId = document.getElementById('truckSelect').value;
-
-        if (!selectedTruckId) {
-            alert("Please select a truck.");
-            return;
-        }
-
-        fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_driver_status_by_driver_id`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                driver_id: driverId,
-                available: available,
-                truck_id: selectedTruckId
-            })
-        }).then(response => {
-            if (response.ok) {
-                alert('Status updated successfully.');
-            } else {
-                alert('Error updating status.');
-            }
-        }).catch(err => console.error('Error submitting availability:', err));
     }
 
     // Accept order
