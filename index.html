@@ -1,59 +1,226 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Driver Status</title>
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Status</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .tabs {
+            display: flex;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            background-color: #f1f1f1;
+        }
+        .tab.active {
+            background-color: #ffffff;
+            font-weight: bold;
+        }
+        .tab-content {
+            border: 1px solid #ddd;
+            padding: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        .data-grid {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .data-grid th, .data-grid td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        .data-grid th {
+            background-color: #f4f4f4;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
 </head>
 <body>
-  <h1>Driver Status</h1>
-  <button id="getProfile">Get Profile</button>
-  <button id="sendData">Send Data to Xano</button>
-  <script>
+
+<h1>Driver Status</h1>
+
+<div class="tabs">
+    <div id="tab1" class="tab active">Open job</div>
+    <div id="tab2" class="tab">Task</div>
+</div>
+
+<div id="tab1-content" class="tab-content">
+    <label>
+        Available: 
+        <input type="checkbox" id="availabilityToggle">
+    </label>
+    <br><br>
+    <label for="truckSelect">Select Truck:</label>
+    <select id="truckSelect">
+        <option value="">--Select Truck--</option>
+    </select>
+</div>
+
+<div id="tab2-content" class="tab-content hidden">
+    <h3>Task List</h3>
+    <table class="data-grid" id="taskTable">
+        <thead>
+            <tr>
+                <th>Driver Name</th>
+                <th>PO Number</th>
+                <th>Order ID</th>
+                <th>Buyer Name</th>
+                <th>Plant</th>
+                <th>Quantity</th>
+                <th>Province</th>
+                <th>District</th>
+                <th>SubDistrict</th>
+                <th>Receive Date</th>
+                <th>Target Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
+
+<script>
     // Initialize LIFF app
     document.addEventListener("DOMContentLoaded", function() {
-      liff.init({
-        liffId: "YOUR_LIFF_ID"
-      }).then(() => {
-        console.log('LIFF initialized');
-      }).catch(err => {
-        console.error('LIFF Initialization failed', err);
-      });
+        liff.init({
+            liffId: "2005786037-0DW7REEv" // Updated LIFF ID
+        }).then(() => {
+            console.log('LIFF initialized');
+            fetchDriverData();
+        }).catch(err => {
+            console.error('LIFF Initialization failed', err);
+        });
+
+        // Tab functionality
+        const tab1 = document.getElementById('tab1');
+        const tab2 = document.getElementById('tab2');
+        const tab1Content = document.getElementById('tab1-content');
+        const tab2Content = document.getElementById('tab2-content');
+
+        tab1.addEventListener('click', () => {
+            tab1.classList.add('active');
+            tab2.classList.remove('active');
+            tab1Content.classList.remove('hidden');
+            tab2Content.classList.add('hidden');
+        });
+
+        tab2.addEventListener('click', () => {
+            tab2.classList.add('active');
+            tab1.classList.remove('active');
+            tab2Content.classList.remove('hidden');
+            tab1Content.classList.add('hidden');
+            fetchTaskData(); // Load task data when Task tab is opened
+        });
     });
 
-    // Get Profile
-    document.getElementById('getProfile').addEventListener('click', function() {
-      liff.getProfile().then(profile => {
-        alert('Hello, ' + profile.displayName);
-      }).catch(err => {
-        console.error('Error getting profile', err);
-      });
-    });
+    let driverId = null;
 
-    // Send Data to Xano
-    document.getElementById('sendData').addEventListener('click', function() {
-      liff.getProfile().then(profile => {
-        // Send data to Xano
-        fetch('https://YOUR_XANO_ENDPOINT_URL', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            userId: profile.userId,
-            displayName: profile.displayName
-          })
-        }).then(response => response.json())
-          .then(data => {
-            alert('Data sent to Xano: ' + JSON.stringify(data));
-          })
-          .catch(err => {
-            console.error('Error sending data to Xano', err);
-          });
-      }).catch(err => {
-        console.error('Error getting profile', err);
-      });
-    });
-  </script>
+    // Fetch driver data from Xano and initialize the form
+    function fetchDriverData() {
+        liff.getProfile().then(profile => {
+            fetch('https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_drivers', {
+                method: 'GET'
+            }).then(response => response.json())
+              .then(data => {
+                  const driver = data.find(d => d.lineId === profile.userId);
+                  if (driver) {
+                      driverId = driver.id;
+                      populateTruckDropdown(driverId);
+                  }
+              }).catch(err => console.error('Error fetching driver data:', err));
+        }).catch(err => console.error('Error getting profile:', err));
+    }
+
+    // Populate truck dropdown
+    function populateTruckDropdown(driverId) {
+        fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_drivers/${driverId}`)
+            .then(response => response.json())
+            .then(data => {
+                const truckSelect = document.getElementById('truckSelect');
+                data.trucks.forEach(truck => {
+                    const option = document.createElement('option');
+                    option.value = truck.id;
+                    option.text = truck.name;
+                    truckSelect.appendChild(option);
+                });
+            }).catch(err => console.error('Error fetching trucks:', err));
+    }
+
+    // Fetch task data and populate the table
+    function fetchTaskData() {
+        if (!driverId) return;
+
+        fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_orders_confirm_by_driver_id/${driverId}`)
+            .then(response => response.json())
+            .then(data => {
+                const taskTable = document.getElementById('taskTable').querySelector('tbody');
+                taskTable.innerHTML = ''; // Clear existing rows
+
+                data.forEach(order => {
+                    if (order.orderStatus === "Ordered") {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${order.driverName}</td>
+                            <td>${order.poNumber}</td>
+                            <td>${order.spn_orders_id}</td>
+                            <td>${order._spn_orders.buyerName}</td>
+                            <td>${order._spn_orders.plant}</td>
+                            <td>${order._spn_orders.quantity}</td>
+                            <td>${order._spn_orders.province}</td>
+                            <td>${order._spn_orders.district}</td>
+                            <td>${order._spn_orders.subDistrict}</td>
+                            <td>${order._spn_orders.receiveDate}</td>
+                            <td>${order._spn_orders.targetDate}</td>
+                            <td class="action-buttons">
+                                <button onclick="acceptOrder(${order.id})">รับงาน</button>
+                                <button onclick="completeOrder(${order.id})">ปิดงาน</button>
+                            </td>
+                        `;
+                        taskTable.appendChild(row);
+                    }
+                });
+            }).catch(err => console.error('Error fetching task data:', err));
+    }
+
+    // Accept order
+    function acceptOrder(orderId) {
+        fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_orders_confirm/${orderId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderStatus: "In transit" })
+        }).then(() => {
+            alert('Order accepted');
+            fetchTaskData(); // Refresh the task list
+        }).catch(err => console.error('Error accepting order:', err));
+    }
+
+    // Complete order
+    function completeOrder(orderId) {
+        fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_orders_confirm/${orderId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderStatus: "Completed" })
+        }).then(() => {
+            alert('Order completed');
+            fetchTaskData(); // Refresh the task list
+        }).catch(err => console.error('Error completing order:', err));
+    }
+</script>
+
 </body>
 </html>
