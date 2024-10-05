@@ -53,6 +53,12 @@
                 flex-direction: column;
             }
         }
+        .chiclet {
+            margin-top: 5px;
+            padding: 5px 10px;
+            background-color: lightgrey;
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body>
@@ -72,6 +78,7 @@
         <img id="profilePicture" src="" class="profile-picture" alt="Profile Picture">
         <h3 id="driverName"></h3>
         <p>Driver ID: <span id="driverId"></span></p>
+        <div class="chiclet" id="statusChiclet">Not available</div>
     </div>
 
     <!-- Availability Toggle -->
@@ -156,7 +163,6 @@
 
     let driverId = null;
 
-    // Fetch driver data from API and initialize the form
     function fetchDriverData() {
         liff.getProfile().then(profile => {
             document.getElementById('profilePicture').src = profile.pictureUrl;
@@ -166,14 +172,13 @@
                     driverId = driver.id;
                     document.getElementById('driverName').textContent = driver.driverName;
                     document.getElementById('driverId').textContent = driver.id;
-                    populateTruckDropdown(driverId);
                     fetchCurrentStatus(driverId);
+                    populateTruckDropdown(driverId);
                 }
             }).catch(err => console.error('Error fetching driver data:', err));
         }).catch(err => console.error('Error getting profile:', err));
     }
 
-    // Populate truck dropdown with truckNo using API call
     function populateTruckDropdown(driverId) {
         fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_drivers/${driverId}`)
             .then(response => response.json())
@@ -193,7 +198,6 @@
             }).catch(err => console.error('Error fetching trucks:', err));
     }
 
-    // Fetch current truck and availability status
     function fetchCurrentStatus(driverId) {
         fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_driver_status_by_driver_id`, {
             method: 'POST',
@@ -201,13 +205,14 @@
             body: JSON.stringify({ driverId: driverId })
         }).then(response => response.json()).then(data => {
             if (data) {
-                document.getElementById('truckSelect').value = data.truckId;
+                const truckSelect = document.getElementById('truckSelect');
+                truckSelect.value = data.truckId || ""; // Set the default value if data is available
                 document.getElementById('availabilityToggle').checked = data.driverStatus === "Available";
+                document.getElementById('statusChiclet').textContent = data.driverStatus || "Not available";
             }
         }).catch(err => console.error('Error fetching current status:', err));
     }
 
-    // Submit availability and selected truck
     function submitAvailability() {
         const driverStatus = document.getElementById('availabilityToggle').checked ? 'Available' : 'Not available';
         const selectedTruckId = document.getElementById('truckSelect').value;
@@ -222,6 +227,7 @@
         }).then(response => {
             if (response.ok) {
                 alert('Status updated successfully.');
+                document.getElementById('statusChiclet').textContent = driverStatus;
             } else {
                 response.text().then(text => console.error(text));
                 alert('Error updating status.');
