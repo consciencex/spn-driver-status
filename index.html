@@ -180,7 +180,7 @@ let driverId = null;
 document.addEventListener("DOMContentLoaded", function () {
     liff.init({ liffId: "2005786037-0DW7REEv" }).then(() => {
         console.log('LIFF initialized');
-        fetchDriverData();
+        initializeApp();
     }).catch(err => {
         console.error('LIFF Initialization failed', err);
     });
@@ -206,6 +206,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
     document.getElementById('submitAvailability').addEventListener('click', submitAvailability);
 });
+
+function initializeApp() {
+    liff.getProfile().then(profile => {
+        document.getElementById('lineId').value = profile.userId; // Set lineId
+        document.getElementById('lineName').value = profile.displayName; // Set lineName
+        fetchDriverData();
+    }).catch(err => console.error('Error getting profile:', err));
+}
 
 function showTab(tabName) {
     document.querySelectorAll('.MuiTab-root').forEach(tab => {
