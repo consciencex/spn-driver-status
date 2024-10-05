@@ -67,6 +67,7 @@
             background-color: grey;
         }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mui/0.9.43/css/mui.min.css">
 </head>
 <body>
 
@@ -91,10 +92,10 @@
     <!-- Availability Toggle -->
     <div class="form-group">
         <label class="MuiFormLabel-root">Available</label><br>
-        <label class="mui-switch">
+        <div class="mui-switch">
             <input type="checkbox" id="availabilityToggle">
-            <span class="mui-switch-track"></span>
-        </label>
+            <label for="availabilityToggle"></label>
+        </div>
     </div>
 
     <!-- Truck Dropdown -->
@@ -221,13 +222,14 @@
             .catch(err => console.error('Error fetching driver status:', err));
     }
 
-    // Populate truck dropdown with truck numbers
+    // Populate truck dropdown with truckNo using API call
     function populateTruckDropdown(driverId) {
         fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_drivers/${driverId}`)
             .then(response => response.json())
             .then(data => {
+                const trucks = data.trucks;
                 const truckSelect = document.getElementById('truckSelect');
-                data.trucks.forEach(truckId => {
+                trucks.forEach(truckId => {
                     fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_trucks/${truckId}`)
                         .then(response => response.json())
                         .then(truckData => {
@@ -235,11 +237,9 @@
                             option.value = truckData.id;
                             option.text = truckData.truckNo;
                             truckSelect.appendChild(option);
-                        })
-                        .catch(err => console.error('Error fetching truck data:', err));
+                        }).catch(err => console.error('Error fetching truck data:', err));
                 });
-            })
-            .catch(err => console.error('Error fetching truck list:', err));
+            }).catch(err => console.error('Error fetching trucks:', err));
     }
 
     // Submit the updated driver status and truck selection
