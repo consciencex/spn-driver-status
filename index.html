@@ -56,10 +56,14 @@
         .chiclet {
             margin-top: 5px;
             padding: 5px 10px;
-            background-color: lightgrey;
+            background-color: lightgray;
             border-radius: 10px;
+            font-weight: bold;
         }
     </style>
+    <!-- Add Material-UI CSS -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mui/0.10.1/css/mui.min.css">
 </head>
 <body>
 
@@ -84,9 +88,9 @@
     <!-- Availability Toggle -->
     <div class="form-group">
         <label class="MuiFormLabel-root">Available</label><br>
-        <label class="MuiFormControlLabel-root">
-            <input type="checkbox" id="availabilityToggle" class="MuiSwitch-root">
-            <span class="MuiSwitch-track"></span>
+        <label class="mui-switch">
+            <input type="checkbox" id="availabilityToggle">
+            <span class="mui-switch-track"></span>
         </label>
     </div>
 
@@ -163,6 +167,7 @@
 
     let driverId = null;
 
+    // Fetch driver data from API and initialize the form
     function fetchDriverData() {
         liff.getProfile().then(profile => {
             document.getElementById('profilePicture').src = profile.pictureUrl;
@@ -179,6 +184,7 @@
         }).catch(err => console.error('Error getting profile:', err));
     }
 
+    // Populate truck dropdown with truckNo using API call
     function populateTruckDropdown(driverId) {
         fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_drivers/${driverId}`)
             .then(response => response.json())
@@ -198,6 +204,7 @@
             }).catch(err => console.error('Error fetching trucks:', err));
     }
 
+    // Fetch current truck and availability status
     function fetchCurrentStatus(driverId) {
         fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_driver_status_by_driver_id`, {
             method: 'POST',
@@ -213,6 +220,7 @@
         }).catch(err => console.error('Error fetching current status:', err));
     }
 
+    // Submit availability and selected truck
     function submitAvailability() {
         const driverStatus = document.getElementById('availabilityToggle').checked ? 'Available' : 'Not available';
         const selectedTruckId = document.getElementById('truckSelect').value;
