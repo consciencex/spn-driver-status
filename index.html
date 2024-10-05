@@ -5,47 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Driver Status</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mui/material@5.0.0-beta.0/dist/material-ui.min.css">
     <style>
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
+            max-width: 800px;
+            margin: auto;
         }
         .tabs {
-            display: flex;
-            cursor: pointer;
             margin-bottom: 20px;
         }
-        .tab {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-bottom: none;
-            background-color: #f1f1f1;
-        }
-        .tab.active {
-            background-color: #ffffff;
-            font-weight: bold;
-        }
         .tab-content {
-            border: 1px solid #ddd;
-            padding: 20px;
+            margin-top: 20px;
         }
-        .hidden {
-            display: none;
-        }
-        .data-grid {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .data-grid th, .data-grid td {
-            border: 1px solid #ddd;
-            padding: 8px;
-        }
-        .data-grid th {
-            background-color: #f4f4f4;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 10px;
+        .form-group {
+            margin-bottom: 20px;
         }
     </style>
 </head>
@@ -54,27 +29,32 @@
 <h1>Driver Status</h1>
 
 <div class="tabs">
-    <div id="tab1" class="tab active">Open job</div>
-    <div id="tab2" class="tab">Task</div>
+    <button id="tab1" class="MuiButtonBase-root MuiButton-root MuiButton-contained">Open Job</button>
+    <button id="tab2" class="MuiButtonBase-root MuiButton-root MuiButton-contained">Task</button>
 </div>
 
 <div id="tab1-content" class="tab-content">
-    <label>
-        Available: 
-        <input type="checkbox" id="availabilityToggle">
-    </label>
-    <br><br>
-    <label for="truckSelect">Select Truck:</label>
-    <select id="truckSelect">
-        <option value="">--Select Truck--</option>
-    </select>
+    <div class="form-group">
+        <label class="MuiFormLabel-root">Available</label><br>
+        <label class="MuiFormControlLabel-root">
+            <input type="checkbox" id="availabilityToggle" class="MuiSwitch-root">
+            <span class="MuiSwitch-track"></span>
+        </label>
+    </div>
+
+    <div class="form-group">
+        <label class="MuiFormLabel-root" for="truckSelect">Select Truck:</label><br>
+        <select id="truckSelect" class="MuiInputBase-root MuiOutlinedInput-root MuiSelect-root">
+            <option value="">--Select Truck--</option>
+        </select>
+    </div>
 </div>
 
 <div id="tab2-content" class="tab-content hidden">
     <h3>Task List</h3>
-    <table class="data-grid" id="taskTable">
-        <thead>
-            <tr>
+    <table class="MuiTable-root MuiTable-stickyHeader">
+        <thead class="MuiTableHead-root">
+            <tr class="MuiTableRow-root">
                 <th>Driver Name</th>
                 <th>PO Number</th>
                 <th>Order ID</th>
@@ -89,13 +69,12 @@
                 <th>Actions</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="taskTableBody" class="MuiTableBody-root">
         </tbody>
     </table>
 </div>
 
 <script>
-    // Initialize LIFF app
     document.addEventListener("DOMContentLoaded", function() {
         liff.init({
             liffId: "2005786037-0DW7REEv" // Updated LIFF ID
@@ -106,25 +85,20 @@
             console.error('LIFF Initialization failed', err);
         });
 
-        // Tab functionality
         const tab1 = document.getElementById('tab1');
         const tab2 = document.getElementById('tab2');
         const tab1Content = document.getElementById('tab1-content');
         const tab2Content = document.getElementById('tab2-content');
 
         tab1.addEventListener('click', () => {
-            tab1.classList.add('active');
-            tab2.classList.remove('active');
             tab1Content.classList.remove('hidden');
             tab2Content.classList.add('hidden');
         });
 
         tab2.addEventListener('click', () => {
-            tab2.classList.add('active');
-            tab1.classList.remove('active');
             tab2Content.classList.remove('hidden');
             tab1Content.classList.add('hidden');
-            fetchTaskData(); // Load task data when Task tab is opened
+            fetchTaskData();
         });
     });
 
@@ -146,17 +120,22 @@
         }).catch(err => console.error('Error getting profile:', err));
     }
 
-    // Populate truck dropdown
+    // Populate truck dropdown with truckNo using API call
     function populateTruckDropdown(driverId) {
         fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_drivers/${driverId}`)
             .then(response => response.json())
             .then(data => {
+                const trucks = data.trucks;
                 const truckSelect = document.getElementById('truckSelect');
-                data.trucks.forEach(truck => {
-                    const option = document.createElement('option');
-                    option.value = truck.id;
-                    option.text = truck.name;
-                    truckSelect.appendChild(option);
+                trucks.forEach(truckId => {
+                    fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_trucks/${truckId}`)
+                        .then(response => response.json())
+                        .then(truckData => {
+                            const option = document.createElement('option');
+                            option.value = truckData.id;
+                            option.text = truckData.truckNo;
+                            truckSelect.appendChild(option);
+                        }).catch(err => console.error('Error fetching truck data:', err));
                 });
             }).catch(err => console.error('Error fetching trucks:', err));
     }
@@ -168,8 +147,8 @@
         fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_orders_confirm_by_driver_id/${driverId}`)
             .then(response => response.json())
             .then(data => {
-                const taskTable = document.getElementById('taskTable').querySelector('tbody');
-                taskTable.innerHTML = ''; // Clear existing rows
+                const taskTableBody = document.getElementById('taskTableBody');
+                taskTableBody.innerHTML = '';
 
                 data.forEach(order => {
                     if (order.orderStatus === "Ordered") {
@@ -186,12 +165,12 @@
                             <td>${order._spn_orders.subDistrict}</td>
                             <td>${order._spn_orders.receiveDate}</td>
                             <td>${order._spn_orders.targetDate}</td>
-                            <td class="action-buttons">
-                                <button onclick="acceptOrder(${order.id})">รับงาน</button>
-                                <button onclick="completeOrder(${order.id})">ปิดงาน</button>
+                            <td>
+                                <button class="MuiButton-root MuiButton-containedPrimary" onclick="acceptOrder(${order.id})">รับงาน</button>
+                                <button class="MuiButton-root MuiButton-containedSecondary" onclick="completeOrder(${order.id})">ปิดงาน</button>
                             </td>
                         `;
-                        taskTable.appendChild(row);
+                        taskTableBody.appendChild(row);
                     }
                 });
             }).catch(err => console.error('Error fetching task data:', err));
@@ -205,7 +184,7 @@
             body: JSON.stringify({ orderStatus: "In transit" })
         }).then(() => {
             alert('Order accepted');
-            fetchTaskData(); // Refresh the task list
+            fetchTaskData();
         }).catch(err => console.error('Error accepting order:', err));
     }
 
@@ -217,7 +196,7 @@
             body: JSON.stringify({ orderStatus: "Completed" })
         }).then(() => {
             alert('Order completed');
-            fetchTaskData(); // Refresh the task list
+            fetchTaskData();
         }).catch(err => console.error('Error completing order:', err));
     }
 </script>
