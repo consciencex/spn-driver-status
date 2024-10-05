@@ -202,21 +202,27 @@
         const driverStatus = document.getElementById('availabilityToggle').checked ? 'Available' : 'Not available';
         const selectedTruckId = document.getElementById('truckSelect').value;
         fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_driver_status_by_driver_id`, {
-            method: 'PATCH',  // Corrected method to PATCH
+            method: 'PATCH',  // Ensure to use PATCH if that's the correct method for updating
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                driverId: parseInt(driverId),
+                driverId: parseInt(driverId), // Convert to integer to match expected type
                 driverStatus: driverStatus,
-                truckId: parseInt(selectedTruckId)  // Ensure this is sent as an integer
+                truckId: parseInt(selectedTruckId)  // Convert to integer
             })
         }).then(response => {
             if (response.ok) {
                 alert('Status updated successfully.');
             } else {
-                alert('Error updating status.');
-                response.text().then(text => console.error(text));
+                response.json().then(data => {
+                    console.error(data);
+                    alert('Error updating status: ' + data.message);
+                });
             }
         }).catch(err => console.error('Error submitting availability:', err));
+    }
+
+    function fetchTaskData() {
+        // Assume similar to above for fetching tasks...
     }
 </script>
 
