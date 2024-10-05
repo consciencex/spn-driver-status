@@ -166,26 +166,31 @@
                     driverId = driver.id;
                     document.getElementById('driverName').textContent = driver.driverName;
                     document.getElementById('driverId').textContent = driver.id;
-                    fetchTruckDropdown(driverId);
+                    populateTruckDropdown(driverId);
                     fetchCurrentStatus(driverId);
                 }
             }).catch(err => console.error('Error fetching driver data:', err));
         }).catch(err => console.error('Error getting profile:', err));
     }
 
-    // Fetch the truck list and populate the dropdown
-    function fetchTruckDropdown(driverId) {
-        fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_drivers/${driverId}`).then(response => response.json()).then(driverData => {
-            const truckSelect = document.getElementById('truckSelect');
-            driverData.trucks.forEach(truckId => {
-                fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_trucks/${truckId}`).then(truckResponse => truckResponse.json()).then(truckData => {
-                    const option = document.createElement('option');
-                    option.value = truckData.id;
-                    option.text = truckData.truckNo;
-                    truckSelect.appendChild(option);
-                }).catch(err => console.error('Error fetching truck data:', err));
-            });
-        }).catch(err => console.error('Error fetching driver trucks:', err));
+    // Populate truck dropdown with truckNo using API call
+    function populateTruckDropdown(driverId) {
+        fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_drivers/${driverId}`)
+            .then(response => response.json())
+            .then(data => {
+                const trucks = data.trucks;
+                const truckSelect = document.getElementById('truckSelect');
+                trucks.forEach(truckId => {
+                    fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_trucks/${truckId}`)
+                        .then(response => response.json())
+                        .then(truckData => {
+                            const option = document.createElement('option');
+                            option.value = truckData.id;
+                            option.text = truckData.truckNo;
+                            truckSelect.appendChild(option);
+                        }).catch(err => console.error('Error fetching truck data:', err));
+                });
+            }).catch(err => console.error('Error fetching trucks:', err));
     }
 
     // Fetch current truck and availability status
