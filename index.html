@@ -270,8 +270,15 @@ function submitDriverRegistration() {
     })
     .then(({status, body}) => {
         if (status === 200) {
-            alert('Driver registered successfully');
-            document.getElementById('registrationAlert').textContent = '';
+            // Show flex message and close LIFF
+            liff.sendMessages([{
+                'type': 'text',
+                'text': 'คุณได้ดำเนินการลงทะเบียนพนักงานขับรถเรียบร้อยแล้ว กรุณาแจ้งเจ้าหน้าที่เพื่อทำการเพิ่มข้อมูลส่วนตัวและตรวจสอบความพร้อมก่อนเริ่มงาน'
+            }]).then(() => {
+                liff.closeWindow();
+            }).catch((err) => {
+                console.error('Error sending message:', err);
+            });
         } else {
             console.error('Failed to register driver:', body);
             document.getElementById('registrationAlert').textContent = `Failed to register driver: ${body.error || body.message}`;
