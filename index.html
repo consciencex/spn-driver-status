@@ -323,27 +323,18 @@ function submitDriverRegistration() {
     const driverName = document.getElementById('registerDriverName').value;
     const driverMobile = document.getElementById('driverMobile').value;
 
-    fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_drivers`)
-        .then(response => response.json())
-        .then(drivers => {
-            if (drivers.some(driver => driver.lineId === lineId)) {
-                document.getElementById('registrationAlert').textContent = 'Duplicate value';
-            } else {
-                fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_drivers`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lineId, lineName, driverName, driverMobile })
-                }).then(response => {
-                    if (response.ok) {
-                        alert('Driver registered successfully');
-                        document.getElementById('registrationAlert').textContent = '';
-                    } else {
-                        alert('Failed to register driver');
-                    }
-                }).catch(err => console.error('Error submitting driver registration:', err));
-            }
-        })
-        .catch(err => console.error('Error checking existing drivers:', err));
+    fetch(`https://xlmj-nxdd-5lt7.s2.xano.io/api:F-P_0CWn/spn_drivers_to_driver_status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lineId, lineName, driverName, driverMobile })
+    }).then(response => {
+        if (response.ok) {
+            alert('Driver registered successfully');
+            document.getElementById('registrationAlert').textContent = '';
+        } else {
+            alert('Failed to register driver');
+        }
+    }).catch(err => console.error('Error submitting driver registration:', err));
 }
 
 </script>
