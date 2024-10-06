@@ -243,6 +243,7 @@ function submitDriverRegistration() {
     const driverName = document.getElementById('registerDriverName').value;
     const driverMobile = document.getElementById('driverMobile').value;
 
+    // Log the data to see what is being sent
     console.log({
         lineId: lineId,
         lineName: lineName,
@@ -266,14 +267,16 @@ function submitDriverRegistration() {
             alert('Driver registered successfully');
             document.getElementById('registrationAlert').textContent = '';
         } else {
-            response.text().then(text => {
+            return response.text().then(text => {
                 console.error('Failed to register driver:', text);
+                document.getElementById('registrationAlert').textContent = 'Failed to register driver: ' + text;
                 alert('Failed to register driver');
             });
         }
     })
     .catch(err => {
         console.error('Error during driver registration:', err);
+        document.getElementById('registrationAlert').textContent = 'Error during registration: ' + err.message;
     });
 }
 
